@@ -37,11 +37,40 @@
         .btn-play{color:#28a745} .btn-play:hover{background:#28a745;color:#fff}
         .btn-pause{color:#e0a800} .btn-pause:hover{background:#ffc107;color:#212529}
         .btn-reset{color:#17a2b8} .btn-reset:hover{background:#17a2b8;color:#fff}
+        .btn-edit{color:#007bff} .btn-edit:hover{background:#007bff;color:#fff}
         .btn-delete{color:#dc3545} .btn-delete:hover{background:#dc3545;color:#fff}
+        
+        /* Modal de Edição */
+        .modal-overlay{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);align-items:center;justify-content:center;z-index:1000}
+        .modal-box{background:#fff;padding:20px;border-radius:8px;width:320px;box-shadow:0 4px 15px rgba(0,0,0,0.2)}
+        .modal-box h3{margin-top:0;color:#333;margin-bottom:15px}
+        .modal-btns{display:flex;justify-content:flex-end;gap:10px;margin-top:15px}
+        .btn-save{background-color:#28a745} .btn-save:hover{background-color:#218838}
+        .btn-cancel{background-color:#6c757d} .btn-cancel:hover{background-color:#5a6268}
+        
         @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
     </style>
 </head>
 <body>
+
+    <div id="editModal" class="modal-overlay">
+        <div class="modal-box">
+            <h3>Editar Timer</h3>
+            <div class="form-group">
+                <label>Nome do Timer:</label>
+                <input type="text" id="edit-name" style="width:100%; box-sizing:border-box;" onkeypress="if(event.key==='Enter') saveEdit()">
+            </div>
+            <div class="form-group" style="margin-top:10px;">
+                <label>Voz da Contagem:</label>
+                <select id="edit-voice" style="width:100%; box-sizing:border-box;"></select>
+            </div>
+            <input type="hidden" id="edit-id">
+            <div class="modal-btns">
+                <button class="btn-cancel" onclick="$('editModal').style.display='none'">Cancelar</button>
+                <button class="btn-save" onclick="saveEdit()">Salvar</button>
+            </div>
+        </div>
+    </div>
 
     <div class="controls-container">
         <h2>Timer PXG - Terror</h2>
@@ -86,8 +115,8 @@
 
         <div class="presets-section">
             <div class="presets-label">Presets Rápidos:</div>
-            <button class="btn-gama" onclick="loadP('gama')">🌿 Gama</button>
             <button class="btn-riza" onclick="loadP('riza')">🔥 Riza</button>
+            <button class="btn-gama" onclick="loadP('gama')">🌿 Gama</button>
         </div>
 
         <div class="global-actions">
@@ -175,9 +204,9 @@
 
             $('timersContainer').insertAdjacentHTML('beforeend', `
                 <div class="timer-card paused" id="tc-${id}">
-                    <div class="timer-title">${n}</div>
+                    <div class="timer-title" id="tt-${id}">${n}</div>
                     <div class="timer-info">Loop: ${dur}s | 🔊 ${sounds[sType].n}</div>
-                    <div class="timer-info">🗣️ Voz: ${vEx}</div>
+                    <div class="timer-info" id="tv-${id}">🗣️ Voz: ${vEx}</div>
                     <div class="timer-display" id="td-${id}">${dur}s</div>
                     <div class="timer-status" id="ts-${id}">Aguardando Inicialização</div>
                     <div class="card-controls">
@@ -186,7 +215,10 @@
                             <button class="icon-btn btn-pause" onclick="pauseT(${id})" title="Pausar">❚❚</button>
                             <button class="icon-btn btn-reset" onclick="resetT(${id})" title="Reiniciar">🔄</button>
                         </div>
-                        <button class="icon-btn btn-delete" onclick="remT(${id})" title="Remover">🗑️</button>
+                        <div class="play-pause-group">
+                            <button class="icon-btn btn-edit" onclick="openEdit(${id})" title="Editar">✏️</button>
+                            <button class="icon-btn btn-delete" onclick="remT(${id})" title="Remover">🗑️</button>
+                        </div>
                     </div>
                 </div>`);
             activeTimers[id] = { n, d: dur, tl: dur, s: sType, v: vName, int: null, run: false };
@@ -238,10 +270,40 @@
         function resetT(id) {
             const t = activeTimers[id];
             if(!t) return;
-            t.tl = t.d; // Reseta o tempo
-            if(synth) synth.cancel(); // Para a voz se estiver falando o aviso
-            // Atualiza a interface instantaneamente (removendo classe warning se houver)
+            t.tl = t.d; 
+            if(synth) synth.cancel(); 
             updC(id, t.run ? '' : 'paused', t.run ? 'Executando...' : 'Pausado');
+        }
+
+        // Funções de Edição do Timer
+        function openEdit(id) {
+            const t = activeTimers[id];
+            if(!t) return;
+            $('edit-id').value = id;
+            $('edit-name').value = t.n;
+            
+            const sel = $('edit-voice');
+            sel.innerHTML = '<option value="nenhuma">Nenhuma (Apenas Bipes)</option>';
+            vozes.forEach(v => sel.add(new Option(v.name, v.name)));
+            sel.value = t.v;
+            
+            $('editModal').style.display = 'flex';
+            $('edit-name').focus();
+        }
+
+        function saveEdit() {
+            const id = $('edit-id').value;
+            const t = activeTimers[id];
+            if(!t) return;
+            
+            t.n = $('edit-name').value.trim() || `Timer ${parseInt(id)+1}`;
+            t.v = $('edit-voice').value;
+            
+            $('tt-'+id).innerText = t.n;
+            const vEx = t.v === 'nenhuma' ? 'Apenas Bipes' : t.v.replace(/Microsoft | Online \(Natural\) - Portuguese \(Brazil\)/g, "");
+            $('tv-'+id).innerText = '🗣️ Voz: ' + vEx;
+            
+            $('editModal').style.display = 'none';
         }
 
         function tick(id) {
