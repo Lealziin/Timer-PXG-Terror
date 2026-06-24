@@ -23,7 +23,11 @@
         .btn-pause-all{background:#ffc107;color:#212529} .btn-pause-all:hover{background:#e0a800}
         .timers-container{display:flex;flex-wrap:wrap;gap:15px;margin-top:20px}
         .timer-card{width:220px;text-align:center;border-top:4px solid #007bff;display:flex;flex-direction:column;transition:all .3s}
-        .timer-title{font-size:16px;font-weight:bold;color:#444;word-wrap:break-word;margin-bottom:5px}
+        
+        /* Novo Cabeçalho do Timer */
+        .timer-header{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:5px}
+        .timer-title{font-size:16px;font-weight:bold;color:#444;word-wrap:break-word;margin:0}
+        
         .timer-info{font-size:11px;color:#666;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
         .timer-display{font-size:36px;font-weight:bold;margin:15px 0;color:#111}
         .timer-status{font-size:12px;margin-bottom:10px;color:#28a745;font-weight:bold;flex-grow:1}
@@ -33,11 +37,15 @@
         .card-controls{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #eee}
         .timer-card.warning .card-controls{border-top-color:rgba(255,255,255,.3)}
         .play-pause-group{display:flex;gap:8px}
-        .icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#f0f2f5;color:#333;font-size:14px;padding:0}
+        .icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#f0f2f5;color:#333;font-size:14px;padding:0;border:none;cursor:pointer;transition:all .2s}
+        
+        /* Ajuste do botão editar para o título */
+        .btn-edit{width:26px; height:26px; font-size:12px; color:#007bff; background:#e9ecef} 
+        .btn-edit:hover{background:#007bff; color:#fff}
+        
         .btn-play{color:#28a745} .btn-play:hover{background:#28a745;color:#fff}
         .btn-pause{color:#e0a800} .btn-pause:hover{background:#ffc107;color:#212529}
         .btn-reset{color:#17a2b8} .btn-reset:hover{background:#17a2b8;color:#fff}
-        .btn-edit{color:#007bff} .btn-edit:hover{background:#007bff;color:#fff}
         .btn-delete{color:#dc3545} .btn-delete:hover{background:#dc3545;color:#fff}
         
         /* Modal de Edição */
@@ -204,7 +212,10 @@
 
             $('timersContainer').insertAdjacentHTML('beforeend', `
                 <div class="timer-card paused" id="tc-${id}">
-                    <div class="timer-title" id="tt-${id}">${n}</div>
+                    <div class="timer-header">
+                        <div class="timer-title" id="tt-${id}">${n}</div>
+                        <button class="icon-btn btn-edit" onclick="openEdit(${id})" title="Editar">✏️</button>
+                    </div>
                     <div class="timer-info">Loop: ${dur}s | 🔊 ${sounds[sType].n}</div>
                     <div class="timer-info" id="tv-${id}">🗣️ Voz: ${vEx}</div>
                     <div class="timer-display" id="td-${id}">${dur}s</div>
@@ -215,10 +226,7 @@
                             <button class="icon-btn btn-pause" onclick="pauseT(${id})" title="Pausar">❚❚</button>
                             <button class="icon-btn btn-reset" onclick="resetT(${id})" title="Reiniciar">🔄</button>
                         </div>
-                        <div class="play-pause-group">
-                            <button class="icon-btn btn-edit" onclick="openEdit(${id})" title="Editar">✏️</button>
-                            <button class="icon-btn btn-delete" onclick="remT(${id})" title="Remover">🗑️</button>
-                        </div>
+                        <button class="icon-btn btn-delete" onclick="remT(${id})" title="Remover">🗑️</button>
                     </div>
                 </div>`);
             activeTimers[id] = { n, d: dur, tl: dur, s: sType, v: vName, int: null, run: false };
@@ -275,7 +283,6 @@
             updC(id, t.run ? '' : 'paused', t.run ? 'Executando...' : 'Pausado');
         }
 
-        // Funções de Edição do Timer
         function openEdit(id) {
             const t = activeTimers[id];
             if(!t) return;
