@@ -36,6 +36,7 @@
         .icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#f0f2f5;color:#333;font-size:14px;padding:0}
         .btn-play{color:#28a745} .btn-play:hover{background:#28a745;color:#fff}
         .btn-pause{color:#e0a800} .btn-pause:hover{background:#ffc107;color:#212529}
+        .btn-reset{color:#17a2b8} .btn-reset:hover{background:#17a2b8;color:#fff}
         .btn-delete{color:#dc3545} .btn-delete:hover{background:#dc3545;color:#fff}
         @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.03)}100%{transform:scale(1)}}
     </style>
@@ -85,8 +86,8 @@
 
         <div class="presets-section">
             <div class="presets-label">Presets Rápidos:</div>
-            <button class="btn-riza" onclick="loadP('riza')">🔥 Riza</button>
             <button class="btn-gama" onclick="loadP('gama')">🌿 Gama</button>
+            <button class="btn-riza" onclick="loadP('riza')">🔥 Riza</button>
         </div>
 
         <div class="global-actions">
@@ -183,6 +184,7 @@
                         <div class="play-pause-group">
                             <button class="icon-btn btn-play" onclick="startT(${id})" title="Iniciar">▶</button>
                             <button class="icon-btn btn-pause" onclick="pauseT(${id})" title="Pausar">❚❚</button>
+                            <button class="icon-btn btn-reset" onclick="resetT(${id})" title="Reiniciar">🔄</button>
                         </div>
                         <button class="icon-btn btn-delete" onclick="remT(${id})" title="Remover">🗑️</button>
                     </div>
@@ -231,6 +233,15 @@
             if(!t || !t.run) return;
             clearInterval(t.int); t.run = false;
             updC(id, $('tc-'+id).classList.contains('warning') ? 'warning' : 'paused', $('tc-'+id).classList.contains('warning') ? 'Aviso Final (Pausado)' : 'Pausado');
+        }
+
+        function resetT(id) {
+            const t = activeTimers[id];
+            if(!t) return;
+            t.tl = t.d; // Reseta o tempo
+            if(synth) synth.cancel(); // Para a voz se estiver falando o aviso
+            // Atualiza a interface instantaneamente (removendo classe warning se houver)
+            updC(id, t.run ? '' : 'paused', t.run ? 'Executando...' : 'Pausado');
         }
 
         function tick(id) {
