@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timers em Loop: Presets Inteligentes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .controls-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: flex-end;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        .form-group label {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="text"], input[type="number"], select {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: #fff;
+        }
+        input[type="text"] { width: 180px; }
+        input[type="number"] { width: 120px; }
+        select { width: 180px; }
+        #voiceInput { width: 250px; }
+        
+        button {
+            padding: 10px 20px;
+            font-size: 15px;
+            font-weight: bold;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-add { background-color: #007bff; height: 40px;}
+        .btn-add:hover { background-color: #0056b3; }
+        .btn-test { background-color: #17a2b8; height: 40px; padding: 10px; font-size: 13px;}
+        .btn-test:hover { background-color: #138496; }
+        
+        /* Estilos dos Presets */
+        .presets-section {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .presets-label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+        .btn-riza { background-color: #ff4757; }
+        .btn-riza:hover { background-color: #ff6b81; }
+        .btn-gama { background-color: #2ed573; color: #111;}
+        .btn-gama:hover { background-color: #7bed9f; }
+
+        .global-actions {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #eee;
+        }
+        .btn-start-all { background-color: #28a745; margin-right: 10px; }
+        .btn-start-all:hover { background-color: #218838; }
+        .btn-pause-all { background-color: #ffc107; color: #212529; }
+        .btn-pause-all:hover { background-color: #e0a800; }
+
+        .timers-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .timer-card {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            width: 220px;
+            text-align: center;
+            border-top: 4px solid #007bff;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .timer-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #444;
+            word-wrap: break-word;
+            margin-bottom: 5px;
+        }
+        .timer-info {
+            font-size: 11px;
+            color: #666;
+            margin-top: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .timer-display {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 15px 0;
+            color: #111;
+        }
+        .timer-status {
+            font-size: 12px;
+            margin-bottom: 10px;
+            color: #28a745;
+            font-weight: bold;
+            flex-grow: 1; 
+        }
+        
+        .timer-card.paused { border-top-color: #ffc107; }
+        .timer-card.paused .timer-status { color: #866500; }
+        .timer-card.warning {
+            background-color: #dc3545;
+            color: white;
+            border-top-color: #b21f2d;
+            animation: pulse 1s infinite;
+        }
+        .timer-card.warning .timer-title,
+        .timer-card.warning .timer-info,
+        .timer-card.warning .timer-display,
+        .timer-card.warning .timer-status {
+            color: white;
+        }
+
+        .card-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+        }
+        .timer-card.warning .card-controls {
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+        .play-pause-group {
+            display: flex;
+            gap: 8px;
+        }
+        .icon-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 34px;
+            height: 34px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            background-color: #f0f2f5;
+            color: #333;
+            padding: 0;
+        }
+        .btn-play { color: #28a745; }
+        .btn-play:hover { background-color: #28a745; color: white; }
+        .btn-pause { color: #e0a800; }
+        .btn-pause:hover { background-color: #ffc107; color: #212529; }
+        .btn-delete { color: #dc3545; }
+        .btn-delete:hover { background-color: #dc3545; color: white; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="controls-container">
+        <h2>Painel de Timers em Loop</h2>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label for="timerNameInput">Nome:</label>
+                <input type="text" id="timerNameInput" placeholder="Nome do evento">
+            </div>
+
+            <div class="form-group">
+                <label for="timerInput">Tempo (segundos):</label>
+                <input type="number" id="timerInput" placeholder="Ex: 25" min="1">
+            </div>
+
+            <div class="form-group">
+                <label for="soundInput">Som de Alerta Final:</label>
+                <select id="soundInput">
+                    <option value="padrao">Bipe Padrão</option>
+                    <option value="agudo">Alarme Agudo</option>
+                    <option value="grave">Tom Grave</option>
+                    <option value="sirene">Sirene Rápida</option>
+                    <option value="duplo">Bipe Duplo</option>
+                    <option value="retro">Som Retrô/Arcade</option>
+                    <option value="sonar">Sonar (Eco longo)</option>
+                    <option value="pulso">Pulso de Alerta</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="voiceInput">Voz da Contagem:</label>
+                <div style="display: flex; gap: 5px;">
+                    <select id="voiceInput">
+                        <option value="nenhuma">Nenhuma (Apenas Bipes)</option>
+                    </select>
+                    <button type="button" class="btn-test" onclick="testarVozPrevia()">🔊 Testar</button>
+                </div>
+            </div>
+
+            <button class="btn-add" onclick="addTimer()">+ Adicionar</button>
+        </div>
+
+        <div class="presets-section">
+            <div class="presets-label">Presets Rápidos:</div>
+            <button class="btn-riza" onclick="loadPreset('riza')">🔥 Riza</button>
+            <button class="btn-gama" onclick="loadPreset('gama')">🌿 Gama</button>
+        </div>
+
+        <div class="global-actions">
+            <button class="btn-start-all" onclick="startAllTimers()">➔ Sincronizar e Iniciar Todos</button>
+            <button class="btn-pause-all" onclick="pauseAllTimers()">❚❚ Pausar Todos</button>
+        </div>
+    </div>
+
+    <div class="timers-container" id="timersContainer">
+        <!-- Os timers gerados entram aqui -->
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        let timerCount = 0;
+        const activeTimers = {};
+        let vozesDisponiveis = [];
+        let testTimeoutId; 
+
+        const soundNames = {
+            padrao: "Bipe Padrão",
+            agudo: "Alarme Agudo",
+            grave: "Tom Grave",
+            sirene: "Sirene Rápida",
+            duplo: "Bipe Duplo",
+            retro: "Som Retrô",
+            sonar: "Sonar (Eco)",
+            pulso: "Pulso"
+        };
+
+        function carregarVozes() {
+            vozesDisponiveis = window.speechSynthesis.getVoices();
+            const voiceSelect = document.getElementById('voiceInput');
+            
+            const valorAtual = voiceSelect.value;
+            voiceSelect.innerHTML = '<option value="nenhuma">Nenhuma (Apenas Bipes)</option>'; 
+            
+            if (vozesDisponiveis.length > 0) {
+                const vozesPT = vozesDisponiveis.filter(v => v.lang.toLowerCase().includes('pt'));
+                if (vozesPT.length > 0) {
+                    vozesPT.forEach(voz => {
+                        const option = document.createElement('option');
+                        option.value = voz.name;
+                        option.textContent = voz.name;
+                        voiceSelect.appendChild(option);
+                    });
+                }
+            }
+            if (valorAtual) voiceSelect.value = valorAtual;
+        }
+
+        if ('speechSynthesis' in window) {
+            carregarVozes();
+            if (window.speechSynthesis.onvoiceschanged !== undefined) {
+                window.speechSynthesis.onvoiceschanged = carregarVozes;
+            }
+        }
+
+        function testarVozPrevia() {
+            const voiceSelect = document.getElementById('voiceInput');
+            const timerNameInput = document.getElementById('timerNameInput');
+            const soundSelect = document.getElementById('soundInput');
+            
+            const voiceName = voiceSelect.value;
+            const timerName = timerNameInput.value.trim();
+            const soundType = soundSelect.value;
+            
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            clearTimeout(testTimeoutId);
+            
+            if (voiceName === 'nenhuma') {
+                playSound(soundType, true); 
+                testTimeoutId = setTimeout(() => { playSound(soundType, false); }, 800);
+                return;
+            }
+            
+            if (timerName) {
+                const falaTitulo = new SpeechSynthesisUtterance(timerName);
+                falaTitulo.rate = 1.0; falaTitulo.pitch = 1.0; 
+                
+                if (vozesDisponiveis.length === 0) vozesDisponiveis = window.speechSynthesis.getVoices();
+                const vozSelecionada = vozesDisponiveis.find(v => v.name === voiceName);
+                if (vozSelecionada) falaTitulo.voice = vozSelecionada;
+
+                falaTitulo.onend = () => {
+                    testTimeoutId = setTimeout(() => { falarTexto("5, 4, 3, 2, 1", voiceName); }, 1500); 
+                };
+
+                window.speechSynthesis.speak(falaTitulo);
+            } else {
+                falarTexto("5, 4, 3, 2, 1", voiceName);
+            }
+        }
+
+        function falarTexto(texto, nomeDaVoz) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const fala = new SpeechSynthesisUtterance(texto);
+                fala.rate = 1.0; fala.pitch = 1.0; 
+
+                if (vozesDisponiveis.length === 0) vozesDisponiveis = window.speechSynthesis.getVoices();
+                if (nomeDaVoz) {
+                    const vozSelecionada = vozesDisponiveis.find(v => v.name === nomeDaVoz);
+                    if (vozSelecionada) fala.voice = vozSelecionada;
+                }
+                window.speechSynthesis.speak(fala);
+            }
+        }
+
+        function playSound(soundType, isWarning = false) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            let frequency = 440;
+            let type = 'sine';
+
+            if (isWarning) {
+                switch (soundType) {
+                    case 'agudo': case 'pulso': type = 'square'; frequency = 880; break;
+                    case 'grave': type = 'triangle'; frequency = 220; break;
+                    case 'sirene': case 'sonar': type = 'sawtooth'; frequency = 600; break;
+                    case 'retro': type = 'square'; frequency = 500; break;
+                    case 'duplo': type = 'sine'; frequency = 660; break;
+                    default: type = 'sine'; frequency = 440; break;
+                }
+                oscillator.frequency.value = frequency * 1.2;
+                oscillator.type = type;
+                oscillator.start();
+                gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.1);
+                oscillator.stop(audioCtx.currentTime + 0.1);
+                return;
+            }
+
+            oscillator.start();
+            switch (soundType) {
+                case 'agudo': 
+                    oscillator.type = 'square'; oscillator.frequency.value = 880; 
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+                    oscillator.stop(audioCtx.currentTime + 0.8);
+                    break;
+                case 'grave': 
+                    oscillator.type = 'triangle'; oscillator.frequency.value = 220; 
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+                    oscillator.stop(audioCtx.currentTime + 0.8);
+                    break;
+                case 'sirene': 
+                    oscillator.type = 'sawtooth'; oscillator.frequency.value = 587.33; 
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+                    oscillator.stop(audioCtx.currentTime + 0.8);
+                    break;
+                case 'duplo':
+                    oscillator.type = 'sine'; oscillator.frequency.value = 660;
+                    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                    gainNode.gain.setValueAtTime(0, audioCtx.currentTime + 0.15);
+                    gainNode.gain.setValueAtTime(1, audioCtx.currentTime + 0.3);
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.6);
+                    oscillator.stop(audioCtx.currentTime + 0.6);
+                    break;
+                case 'retro':
+                    oscillator.type = 'square'; 
+                    oscillator.frequency.setValueAtTime(200, audioCtx.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(900, audioCtx.currentTime + 0.4);
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.5);
+                    oscillator.stop(audioCtx.currentTime + 0.5);
+                    break;
+                case 'sonar':
+                    oscillator.type = 'sine'; oscillator.frequency.value = 900;
+                    gainNode.gain.setValueAtTime(1, audioCtx.currentTime);
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 1.5);
+                    oscillator.stop(audioCtx.currentTime + 1.5);
+                    break;
+                case 'pulso':
+                    oscillator.type = 'sawtooth'; oscillator.frequency.value = 400;
+                    for(let i=0; i<4; i++) {
+                        gainNode.gain.setValueAtTime(1, audioCtx.currentTime + i*0.15);
+                        gainNode.gain.setValueAtTime(0.00001, audioCtx.currentTime + i*0.15 + 0.1);
+                    }
+                    oscillator.stop(audioCtx.currentTime + 0.6);
+                    break;
+                default:
+                    oscillator.type = 'sine'; oscillator.frequency.value = 440; 
+                    gainNode.gain.exponentialRampToValueAtTime(0.00001, audioCtx.currentTime + 0.8);
+                    oscillator.stop(audioCtx.currentTime + 0.8);
+                    break;
+            }
+        }
+
+        function createTimer(timerName, duration, soundType, voiceName) {
+            if (duration <= 8) {
+                alert(`O tempo do timer "${timerName}" deve ser maior que 8 segundos.`);
+                return;
+            }
+
+            const timerId = timerCount++;
+            if (!timerName) timerName = `Timer ${timerId + 1}`;
+            
+            const container = document.getElementById('timersContainer');
+            const card = document.createElement('div');
+            card.className = 'timer-card paused'; 
+            card.id = `timer-card-${timerId}`;
+            
+            let vozExibicao = 'Apenas Bipes';
+            if (voiceName !== 'nenhuma') {
+                vozExibicao = voiceName.replace("Microsoft ", "").replace(" Online (Natural) - Portuguese (Brazil)", "");
+            }
+
+            card.innerHTML = `
+                <div class="timer-title">${timerName}</div>
+                <div class="timer-info">Loop: ${duration}s | 🔊 ${soundNames[soundType]}</div>
+                <div class="timer-info">🗣️ Voz: ${vozExibicao}</div>
+                <div class="timer-display" id="display-${timerId}">${duration}s</div>
+                <div class="timer-status" id="status-${timerId}">Aguardando Inicialização</div>
+                
+                <div class="card-controls">
+                    <div class="play-pause-group">
+                        <button class="icon-btn btn-play" onclick="startTimer(${timerId})" title="Iniciar/Retomar">▶</button>
+                        <button class="icon-btn btn-pause" onclick="pauseTimer(${timerId})" title="Pausar">❚❚</button>
+                    </div>
+                    <button class="icon-btn btn-delete" onclick="removeTimer(${timerId})" title="Remover">🗑️</button>
+                </div>
+            `;
+            container.appendChild(card);
+
+            activeTimers[timerId] = {
+                name: timerName, 
+                duration: duration,
+                timeLeft: duration,
+                soundType: soundType,
+                voiceName: voiceName, 
+                interval: null,
+                isRunning: false
+            };
+        }
+
+        function addTimer() {
+            const timeInput = document.getElementById('timerInput');
+            const nameInput = document.getElementById('timerNameInput');
+            const soundSelect = document.getElementById('soundInput');
+            const voiceSelect = document.getElementById('voiceInput');
+            
+            const duration = parseInt(timeInput.value);
+            let timerName = nameInput.value.trim();
+            const soundType = soundSelect.value;
+            const voiceName = voiceSelect.value; 
+
+            if (isNaN(duration) || duration <= 0) {
+                alert("Por favor, insira um tempo válido em segundos.");
+                return;
+            }
+
+            createTimer(timerName, duration, soundType, voiceName);
+
+            timeInput.value = ''; 
+            nameInput.value = ''; 
+            nameInput.focus();
+        }
+
+        // --- Funções de Limpeza e Presets ---
+        function removeAllTimers() {
+            // Limpa todos os intervalos ativos
+            for (let id in activeTimers) {
+                clearInterval(activeTimers[id].interval);
+                delete activeTimers[id];
+            }
+            // Zera a tela e reseta o contador de IDs
+            document.getElementById('timersContainer').innerHTML = '';
+            timerCount = 0;
+        }
+
+        function loadPreset(type) {
+            // Verifica se há timers registrados atualmente
+            if (Object.keys(activeTimers).length > 0) {
+                const confirmar = confirm("⚠️ Isso apagará os timers que já estão na tela. Deseja continuar?");
+                if (!confirmar) {
+                    return; // Se cancelar, interrompe a função
+                }
+                removeAllTimers(); // Se der OK, limpa tudo
+            }
+
+            const voiceName = document.getElementById('voiceInput').value; 
+
+            if (type === 'riza') {
+                createTimer("Fire Ball", 25, "agudo", voiceName);
+                createTimer("Chuva", 90, "sonar", voiceName);
+            } else if (type === 'gama') {
+                createTimer("Cura", 90, "pulso", voiceName);
+                createTimer("Beam", 50, "duplo", voiceName);
+            }
+        }
+
+        // --- Controles ---
+        function startTimer(timerId) {
+            const timer = activeTimers[timerId];
+            if (!timer || timer.isRunning) return; 
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if ('speechSynthesis' in window) {
+                let s = new SpeechSynthesisUtterance('');
+                s.volume = 0;
+                window.speechSynthesis.speak(s);
+            }
+
+            timer.isRunning = true;
+            const card = document.getElementById(`timer-card-${timerId}`);
+            const status = document.getElementById(`status-${timerId}`);
+            
+            card.classList.remove('paused');
+            
+            if (!card.classList.contains('warning')) {
+                status.innerText = "Executando...";
+            } else {
+                status.innerText = "Aviso Final!";
+            }
+
+            timer.interval = setInterval(() => tick(timerId), 1000);
+        }
+
+        function pauseTimer(timerId) {
+            const timer = activeTimers[timerId];
+            if (!timer || !timer.isRunning) return;
+
+            clearInterval(timer.interval);
+            timer.isRunning = false;
+
+            const card = document.getElementById(`timer-card-${timerId}`);
+            const status = document.getElementById(`status-${timerId}`);
+            
+            if (!card.classList.contains('warning')) {
+                card.classList.add('paused');
+                status.innerText = "Pausado";
+            } else {
+                status.innerText = "Aviso Final (Pausado)";
+            }
+        }
+
+        function tick(timerId) {
+            const timer = activeTimers[timerId];
+            if (!timer || !timer.isRunning) return;
+
+            timer.timeLeft--;
+
+            const display = document.getElementById(`display-${timerId}`);
+            const card = document.getElementById(`timer-card-${timerId}`);
+            const status = document.getElementById(`status-${timerId}`);
+
+            display.innerText = `${timer.timeLeft}s`;
+
+            if (timer.timeLeft <= 8 && timer.timeLeft > 0) {
+                card.className = 'timer-card warning';
+                status.innerText = `Aviso Final!`;
+                
+                if (timer.voiceName !== 'nenhuma') {
+                    if (timer.timeLeft === 8) {
+                        falarTexto(timer.name, timer.voiceName);
+                    } else if (timer.timeLeft <= 5) {
+                        falarTexto(timer.timeLeft.toString(), timer.voiceName);
+                    }
+                } else {
+                    if (timer.timeLeft <= 5) {
+                        playSound(timer.soundType, true); 
+                    }
+                }
+            }
+
+            if (timer.timeLeft <= 0) {
+                playSound(timer.soundType, false); 
+                timer.timeLeft = timer.duration; 
+                
+                card.className = 'timer-card';
+                status.innerText = "Executando...";
+                display.innerText = `${timer.timeLeft}s`;
+            }
+        }
+
+        function startAllTimers() {
+            if (Object.keys(activeTimers).length === 0) {
+                alert("Adicione pelo menos um timer antes de iniciar.");
+                return;
+            }
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            if ('speechSynthesis' in window) {
+                let s = new SpeechSynthesisUtterance('');
+                s.volume = 0;
+                window.speechSynthesis.speak(s);
+            }
+
+            for (let id in activeTimers) {
+                clearInterval(activeTimers[id].interval);
+                activeTimers[id].timeLeft = activeTimers[id].duration; 
+                activeTimers[id].isRunning = true;
+                
+                const card = document.getElementById(`timer-card-${id}`);
+                const status = document.getElementById(`status-${id}`);
+                const display = document.getElementById(`display-${id}`);
+                
+                card.className = 'timer-card';
+                status.innerText = "Executando...";
+                display.innerText = `${activeTimers[id].timeLeft}s`;
+
+                activeTimers[id].interval = setInterval(() => tick(id), 1000);
+            }
+        }
+
+        function pauseAllTimers() {
+            for (let id in activeTimers) {
+                pauseTimer(id); 
+            }
+            if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+            clearTimeout(testTimeoutId); 
+        }
+
+        function removeTimer(timerId) {
+            if (activeTimers[timerId]) {
+                clearInterval(activeTimers[timerId].interval);
+                delete activeTimers[timerId];
+            }
+            const card = document.getElementById(`timer-card-${timerId}`);
+            if (card) card.remove();
+        }
+    </script>
+</body>
+</html>
