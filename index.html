@@ -17,14 +17,18 @@
         .btn-add{background:#007bff;height:40px} .btn-add:hover{background:#0056b3}
         .btn-test{background:#17a2b8;height:40px;padding:10px;font-size:13px} .btn-test:hover{background:#138496}
         .presets-section,.global-actions{margin-top:15px;padding-top:15px;border-top:1px solid #eee;align-items:center}
+        
+        /* Botões de Preset */
         .btn-riza{background:#ff4757} .btn-riza:hover{background:#ff6b81}
         .btn-gama{background:#2ed573;color:#111} .btn-gama:hover{background:#7bed9f}
+        .btn-kaikiri{background:#f39c12} .btn-kaikiri:hover{background:#e67e22} /* Novo Preset Kaikiri */
+
         .btn-start-all{background:#28a745;margin-right:10px} .btn-start-all:hover{background:#218838}
         .btn-pause-all{background:#ffc107;color:#212529} .btn-pause-all:hover{background:#e0a800}
         .timers-container{display:flex;flex-wrap:wrap;gap:15px;margin-top:20px}
         .timer-card{width:220px;text-align:center;border-top:4px solid #007bff;display:flex;flex-direction:column;transition:all .3s}
         
-        /* Novo Cabeçalho do Timer */
+        /* Cabeçalho do Timer */
         .timer-header{display:flex;justify-content:center;align-items:center;gap:8px;margin-bottom:5px}
         .timer-title{font-size:16px;font-weight:bold;color:#444;word-wrap:break-word;margin:0}
         
@@ -39,7 +43,6 @@
         .play-pause-group{display:flex;gap:8px}
         .icon-btn{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;background:#f0f2f5;color:#333;font-size:14px;padding:0;border:none;cursor:pointer;transition:all .2s}
         
-        /* Ajuste do botão editar para o título */
         .btn-edit{width:26px; height:26px; font-size:12px; color:#007bff; background:#e9ecef} 
         .btn-edit:hover{background:#007bff; color:#fff}
         
@@ -125,6 +128,7 @@
             <div class="presets-label">Presets Rápidos:</div>
             <button class="btn-gama" onclick="loadP('gama')">🌿 Gama</button>
             <button class="btn-riza" onclick="loadP('riza')">🔥 Riza</button>
+            <button class="btn-kaikiri" onclick="loadP('kaikiri')">👊 Kaikiri</button>
         </div>
 
         <div class="global-actions">
@@ -248,8 +252,22 @@
             if(Object.keys(activeTimers).length && !confirm("⚠️ Isso apagará os timers atuais. Continuar?")) return;
             remAll();
             const v = $('voiceInput').value;
-            if(type === 'riza') { createT("Fire Ball", 25, "agudo", v); createT("Chuva", 90, "sonar", v); }
-            else { createT("Cura", 90, "pulso", v); createT("Solar Beam", 50, "duplo", v); }
+            if(type === 'riza') { 
+                createT("Fire Ball", 25, "agudo", v); 
+                createT("Chuva", 90, "sonar", v); 
+            }
+            else if (type === 'gama') { 
+                createT("Cura", 90, "pulso", v); 
+                createT("Solar Beam", 50, "duplo", v); 
+            }
+            else if (type === 'kaikiri') {
+                createT("reflect", 10, "retro", v);
+                createT("Arm Thrust", 20, "pulso", v);
+                createT("Vital Throw", 20, "padrao", v);
+                createT("Reta Cima/baixo", 25, "duplo", v);
+                createT("Circulo vermelho", 30, "sirene", v);
+                createT("Dynamic Punch (meio)", 40, "agudo", v);
+            }
         }
 
         function updC(id, cls, txt) {
