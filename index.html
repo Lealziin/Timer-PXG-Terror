@@ -21,7 +21,8 @@
         /* Botões de Preset */
         .btn-riza{background:#ff4757} .btn-riza:hover{background:#ff6b81}
         .btn-gama{background:#2ed573;color:#111} .btn-gama:hover{background:#7bed9f}
-        .btn-kaikiri{background:#f39c12} .btn-kaikiri:hover{background:#e67e22} /* Novo Preset Kaikiri */
+        .btn-kaikiri{background:#f39c12} .btn-kaikiri:hover{background:#e67e22} 
+        .btn-ptera{background:#6c757d} .btn-ptera:hover{background:#5a6268} /* Novo Preset Ptera (Cinza) */
 
         .btn-start-all{background:#28a745;margin-right:10px} .btn-start-all:hover{background:#218838}
         .btn-pause-all{background:#ffc107;color:#212529} .btn-pause-all:hover{background:#e0a800}
@@ -129,6 +130,7 @@
             <button class="btn-gama" onclick="loadP('gama')">🌿 Gama</button>
             <button class="btn-riza" onclick="loadP('riza')">🔥 Riza</button>
             <button class="btn-kaikiri" onclick="loadP('kaikiri')">👊 Kaikiri</button>
+            <button class="btn-ptera" onclick="loadP('ptera')">🪨 Ptera</button>
         </div>
 
         <div class="global-actions">
@@ -267,6 +269,13 @@
                 createT("Reta Cima/baixo", 25, "duplo", v);
                 createT("Circulo vermelho", 30, "sirene", v);
                 createT("Dynamic Punch (meio)", 40, "agudo", v);
+            }
+            else if (type === 'ptera') {
+                createT("Fly", 50, "sonar", v);
+                createT("Beam", 20, "duplo", v);
+                createT("Ancient Power", 25, "agudo", v);
+                createT("Corte Costas", 15, "retro", v);
+                createT("Chuva de pedra", 60, "sirene", v);
             }
         }
 
